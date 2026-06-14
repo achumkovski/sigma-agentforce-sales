@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentforce — B2B field sales agent reference</title>
+<style>
+:root {
+  color-scheme: light;
+  --sf-blue: #0176D3;
+  --sf-dark: #032D60;
+  --sf-green: #2E844A;
+  --sf-yellow: #DD7A01;
+  --sf-red: #BA0517;
+  --sf-bg: #F3F3F3;
+  --sf-text: #3E3E3C;
+  --sf-white: #FFFFFF;
+  --sf-border: #D8D8D8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Salesforce Sans', Arial, sans-serif;
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 32px 40px 60px;
+}
+
+/* ── HEADER ── */
+.page-header {
+  background: var(--sf-dark);
+  border-radius: 12px;
+  padding: 28px 36px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.page-header-left h1 { color: white; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.page-header-left p  { color: rgba(255,255,255,0.55); font-size: 13px; }
+.header-stats { display: flex; gap: 32px; flex-shrink: 0; }
+.hstat { text-align: center; }
+.hstat-n { color: white; font-size: 28px; font-weight: 800; }
+.hstat-l { color: rgba(255,255,255,0.5); font-size: 11px; letter-spacing: 0.5px; margin-top: 2px; }
+
+/* ── FILTER BAR ── */
+.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+.filter-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sf-blue); margin-right: 4px; }
+.filter-btn {
+  padding: 5px 14px; border-radius: 20px; border: 1px solid var(--sf-border);
+  background: white; color: var(--sf-text); font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.filter-btn:hover { border-color: var(--sf-blue); color: var(--sf-blue); }
+.filter-btn.active { background: var(--sf-blue); border-color: var(--sf-blue); color: white; }
+
+/* ── TABLE ── */
+.table-wrap {
+  background: white; border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  overflow: hidden; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; min-width: 1420px; }
+thead tr { background: var(--sf-dark); }
+thead th {
+  color: rgba(255,255,255,0.85); font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; padding: 13px 14px;
+  text-align: left; white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+thead th:last-child { border-right: none; }
+tbody tr { border-bottom: 1px solid var(--sf-border); transition: background 120ms ease; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #F7FAFF; }
+tbody tr.hidden { display: none; }
+td {
+  padding: 13px 14px; vertical-align: top; font-size: 12.5px;
+  line-height: 1.55; border-right: 1px solid #EFEFEF; color: var(--sf-text);
+}
+td:last-child { border-right: none; }
+
+/* ── CATEGORY BADGE ── */
+.cat-badge {
+  display: inline-flex; align-items: center; padding: 3px 9px;
+  border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.cat-funnel    { background: #E0F0FF; color: #0057A3; border: 1px solid #B3D4F5; }
+.cat-territory { background: #E8F9EE; color: #1a6b38; border: 1px solid #A8DFB8; }
+.cat-visit     { background: #F0E8FF; color: #5a1a8a; border: 1px solid #CDB5F0; }
+.cat-deal      { background: #FFF3E0; color: #8a4a00; border: 1px solid #F5CCA6; }
+.cat-perf      { background: #FFE8E8; color: #8a0011; border: 1px solid #F5B3B3; }
+.cat-success   { background: #E8FFF2; color: #1a6b38; border: 1px solid #A8DFB8; }
+.cat-analytics { background: #E8F4FF; color: #0057A3; border: 1px solid #B3D4F5; }
+.cat-enable    { background: #FFF8E0; color: #7a5000; border: 1px solid #F5DFA6; }
+.cat-commercial{ background: #F5E8FF; color: #5a1a8a; border: 1px solid #CDB5F0; }
+
+/* ── AGENT NAME ── */
+.agent-name { font-weight: 600; color: var(--sf-dark); font-size: 12.5px; display: flex; align-items: flex-start; gap: 7px; }
+.agent-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 21px; height: 21px; border-radius: 6px;
+  background: var(--sf-blue); color: white; font-size: 10px;
+  font-weight: 700; flex-shrink: 0; margin-top: 1px;
+}
+
+/* ── AUTONOMOUS INDICATOR ── */
+.auto-indicator {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(46,132,74,0.12); border: 1px solid rgba(46,132,74,0.35);
+  color: #1a6b38; border-radius: 10px; padding: 2px 7px 2px 5px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+  white-space: nowrap; margin-top: 5px; flex-shrink: 0;
+}
+.auto-indicator svg { flex-shrink: 0; }
+
+/* ── ACTION STATEMENT ── */
+.action-stmt { font-style: italic; color: #555; font-size: 12px; line-height: 1.6; }
+.action-stmt em { color: var(--sf-blue); font-style: normal; font-weight: 600; }
+
+/* ── USER TAGS ── */
+.user-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+.utag {
+  padding: 2px 7px; border-radius: 10px; background: var(--sf-bg);
+  border: 1px solid var(--sf-border); font-size: 10px; color: var(--sf-text); white-space: nowrap;
+}
+
+/* ── VALUE TEXT ── */
+.value-text { font-size: 12.5px; color: #3E3E3C; }
+.value-text strong { color: var(--sf-dark); }
+
+/* ── FRICTION ── */
+.friction-text { font-size: 12.5px; color: #555; }
+
+/* ── DISCOVERY QUESTIONS ── */
+.disc-list { list-style: none; display: flex; flex-direction: column; gap: 7px; padding: 0; }
+.disc-list li {
+  font-size: 12px; color: var(--sf-text); line-height: 1.5;
+  padding-left: 16px; position: relative;
+}
+.disc-list li::before {
+  content: "Q";
+  position: absolute; left: 0; top: 0;
+  font-size: 9px; font-weight: 800; color: var(--sf-blue);
+  background: #E8F4FF; border-radius: 3px;
+  width: 13px; height: 13px;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px; line-height: 1;
+}
+
+/* ── IMPACTED KPIs ── */
+.kpi-list { display: flex; flex-direction: column; gap: 5px; }
+.kpi-item {
+  font-size: 12px; line-height: 1.4;
+  display: flex; align-items: baseline; gap: 5px;
+}
+.kpi-arrow {
+  font-size: 13px; font-weight: 800; flex-shrink: 0;
+  line-height: 1;
+}
+.kpi-up   .kpi-arrow { color: #2E844A; }
+.kpi-down .kpi-arrow { color: #BA0517; }
+.kpi-up   .kpi-label { color: #1a5c30; }
+.kpi-down .kpi-label { color: #7a0010; }
+.kpi-label { font-size: 11.5px; }
+
+/* ── FOOTER ── */
+.page-footer { margin-top: 24px; text-align: center; font-size: 11px; color: #999; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Agentforce — B2B field sales agents</h1>
+    <p>Reference framework spanning the full sales cycle — from prospecting to close and beyond.</p>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-n">15</div><div class="hstat-l">Agents</div></div>
+    <div class="hstat"><div class="hstat-n">9</div><div class="hstat-l">Categories</div></div>
+    <div class="hstat"><div class="hstat-n">3</div><div class="hstat-l">Autonomous</div></div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Filter</span>
+  <button class="filter-btn active" data-cat="all">All</button>
+  <button class="filter-btn" data-cat="Filling the funnel">Filling the funnel</button>
+  <button class="filter-btn" data-cat="Territory strategy">Territory strategy</button>
+  <button class="filter-btn" data-cat="The visit cycle">The visit cycle</button>
+  <button class="filter-btn" data-cat="Account &amp; deal management">Account &amp; deal management</button>
+  <button class="filter-btn" data-cat="Performance &amp; coaching">Performance &amp; coaching</button>
+  <button class="filter-btn" data-cat="Customer success">Customer success</button>
+  <button class="filter-btn" data-cat="Analytics">Analytics</button>
+  <button class="filter-btn" data-cat="Enablement">Enablement</button>
+  <button class="filter-btn" data-cat="Commercial response">Commercial response</button>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th style="width:100px">Category</th>
+      <th style="width:150px">Agent</th>
+      <th style="width:165px">Description</th>
+      <th style="width:140px">Friction resolved</th>
+      <th style="width:165px">Action statement</th>
+      <th style="width:110px">Impacted users</th>
+      <th style="width:145px">Value delivered</th>
+      <th style="width:180px">Discovery questions</th>
+      <th style="width:145px">Impacted KPIs</th>
+    </tr>
+  </thead>
+  <tbody id="table-body">
+
+    <!-- 01 SDR -->
+    <tr data-cat="Filling the funnel">
+      <td><span class="cat-badge cat-funnel">Filling the funnel</span></td>
+      <td><div class="agent-name" style="flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:7px"><span class="agent-num">01</span>Autonomous SDR / Prospecting agent</div><span class="auto-indicator"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M6 1L2 6h3.5L4 9l4-5H4.5L6 1z" fill="#2E844A"/></svg>Autonomous</span></div></td>
+      <td>Handles outbound sequencing and qualifies prospects through multi-turn conversation, escalating to a human rep only when ready for discovery.</td>
+      <td class="friction-text">Outbound is inconsistent and rep-dependent — pipeline suffers whenever reps are too busy to prospect.</td>
+      <td class="action-stmt">"I want to <em>maintain a consistent outbound motion across all target accounts</em> so that pipeline never dries up between campaigns."</td>
+      <td><div class="user-tags"><span class="utag">SDR managers</span><span class="utag">VP Sales</span><span class="utag">Rev Ops</span></div></td>
+      <td class="value-text"><strong>Always-on pipeline generation</strong> without headcount dependency or cadence gaps.</td>
+      <td><ol class="disc-list">
+        <li>Do you have a dedicated SDR function, or do field reps self-prospect today?</li>
+        <li>How consistently are outbound sequences executed across the team?</li>
+        <li>What share of your pipeline currently comes from outbound activity?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Outbound pipeline generated</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Sequence completion rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Cost per qualified meeting</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Accounts touched per rep</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 02 Lead qual -->
+    <tr data-cat="Filling the funnel">
+      <td><span class="cat-badge cat-funnel">Filling the funnel</span></td>
+      <td><div class="agent-name" style="flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:7px"><span class="agent-num">02</span>Lead qualification &amp; routing agent</div><span class="auto-indicator"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M6 1L2 6h3.5L4 9l4-5H4.5L6 1z" fill="#2E844A"/></svg>Autonomous</span></div></td>
+      <td>Engages inbound leads conversationally, applies ICP criteria in real time, and either books a meeting or routes to the right rep with full context attached.</td>
+      <td class="friction-text">Inbound leads go stale waiting for human follow-up; wrong leads reach wrong reps.</td>
+      <td class="action-stmt">"I want <em>every inbound lead engaged and qualified instantly</em> so that no revenue opportunity is lost to slow response times."</td>
+      <td><div class="user-tags"><span class="utag">Marketing ops</span><span class="utag">SDR managers</span><span class="utag">Field reps</span></div></td>
+      <td class="value-text"><strong>Faster lead response</strong> and higher inbound conversion through instant, consistent ICP-based qualification.</td>
+      <td><ol class="disc-list">
+        <li>What is your average lead response time for inbound enquiries today?</li>
+        <li>How are inbound leads currently qualified and assigned to reps?</li>
+        <li>What percentage of inbound leads convert to a qualified opportunity?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Lead response time</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Lead-to-opportunity conversion</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Unqualified leads reaching reps</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Inbound pipeline value</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 03 Territory -->
+    <tr data-cat="Territory strategy">
+      <td><span class="cat-badge cat-territory">Territory strategy</span></td>
+      <td><div class="agent-name"><span class="agent-num">03</span>Territory intelligence &amp; white space agent</div></td>
+      <td>Provides a strategic, territory-wide view of ordering patterns, product penetration, and white space — answering where a rep should focus their energy, not just preparing for a specific visit.</td>
+      <td class="friction-text">Reps rely on gut feel for territory planning; hidden revenue sits untouched in the account base.</td>
+      <td class="action-stmt">"I want to <em>understand exactly where the untapped revenue is in my territory</em> so that I prioritise the right accounts before a competitor does."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Regional managers</span></div></td>
+      <td class="value-text"><strong>Data-driven territory focus</strong> that uncovers revenue hiding in the existing account base.</td>
+      <td><ol class="disc-list">
+        <li>How do reps currently decide which accounts to prioritise in their territory?</li>
+        <li>Do you have visibility into product penetration across your account base today?</li>
+        <li>How formally are cross-sell and upsell opportunities reviewed each quarter?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Revenue per territory</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Cross-sell / upsell pipeline</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Product penetration rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Accounts with zero activity (90d)</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 04 Pre-call -->
+    <tr data-cat="The visit cycle">
+      <td><span class="cat-badge cat-visit">The visit cycle</span></td>
+      <td><div class="agent-name"><span class="agent-num">04</span>Pre-call research &amp; briefing agent</div></td>
+      <td>Aggregates account history, open opportunities, recent news, and stakeholder relationships into a concise brief delivered to the rep's phone before every meeting.</td>
+      <td class="friction-text">Reps spend 20–30 minutes manually researching before each visit; junior reps walk in underprepared.</td>
+      <td class="action-stmt">"I want <em>a complete account brief waiting for me before every meeting</em> so that I can focus on the conversation, not the research."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Account managers</span></div></td>
+      <td class="value-text"><strong>20–30 minutes saved per visit</strong> and consistently higher meeting quality across the team.</td>
+      <td><ol class="disc-list">
+        <li>How long do reps typically spend preparing for a customer meeting today?</li>
+        <li>Is pre-meeting preparation tracked or required in your sales process?</li>
+        <li>How consistent is meeting preparation quality between junior and senior reps?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Pre-meeting prep time per rep</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Meeting-to-opportunity conversion</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Preparation consistency across team</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Customer satisfaction with meetings</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 05 In-meeting -->
+    <tr data-cat="The visit cycle">
+      <td><span class="cat-badge cat-visit">The visit cycle</span></td>
+      <td><div class="agent-name"><span class="agent-num">05</span>In-meeting assistant agent</div></td>
+      <td>Delivered via Salesforce mobile on Einstein Conversation Intelligence. Real-time transcription, speaker separation, AI-generated summaries, and agentic handoff to the post-visit debrief at meeting close.</td>
+      <td class="friction-text">Key details and commitments are missed or forgotten; note-taking interrupts the conversation flow.</td>
+      <td class="action-stmt">"I want <em>every meeting automatically captured and summarised</em> so that I never miss a commitment, an objection, or a buying signal."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Account managers</span><span class="utag">Sales managers</span></div></td>
+      <td class="value-text"><strong>Complete, attributed meeting capture</strong> with zero manual effort — seamlessly handed off to the debrief workflow.</td>
+      <td><ol class="disc-list">
+        <li>Are customer meetings currently recorded or transcribed in any form?</li>
+        <li>How do reps capture action items and commitments during meetings today?</li>
+        <li>Is Einstein Conversation Intelligence currently active in your Salesforce org?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Action item capture rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Post-meeting admin time</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Meeting data completeness</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Commitments missed post-meeting</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 06 Post-visit -->
+    <tr data-cat="The visit cycle">
+      <td><span class="cat-badge cat-visit">The visit cycle</span></td>
+      <td><div class="agent-name"><span class="agent-num">06</span>Post-visit debrief agent</div></td>
+      <td>A voice memo from the car park triggers the agent to update the opportunity, create and assign action items, draft follow-up emails, send calendar invites, and log the visit — all parsed from natural language.</td>
+      <td class="friction-text">End-of-day logging is time-consuming and inaccurate; action items slip and pipeline data degrades.</td>
+      <td class="action-stmt">"I want to <em>capture everything from my meetings in under two minutes</em> so that my pipeline data is always current and follow-ups never fall through."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span></div></td>
+      <td class="value-text"><strong>Real-time data accuracy</strong> across the pipeline — the foundational input that powers every downstream agent.</td>
+      <td><ol class="disc-list">
+        <li>When do reps typically update Salesforce after a customer visit — same day or later?</li>
+        <li>What percentage of field visits result in a complete opportunity update?</li>
+        <li>Do reps currently use the Salesforce mobile app during or after visits?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Data completeness in Salesforce</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time between visit and record update</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Next steps logged per visit</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Daily admin time per rep</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 07 Account health -->
+    <tr data-cat="Account &amp; deal management">
+      <td><span class="cat-badge cat-deal">Account &amp; deal management</span></td>
+      <td><div class="agent-name" style="flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:7px"><span class="agent-num">07</span>Account intelligence &amp; health agent</div><span class="auto-indicator"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M6 1L2 6h3.5L4 9l4-5H4.5L6 1z" fill="#2E844A"/></svg>Autonomous</span></div></td>
+      <td>Continuously monitors each account — tracking external signals, competitive activity, stakeholder coverage, and relationship health — synthesising everything into a dynamic account-level SWOT with recommended actions.</td>
+      <td class="friction-text">Account risks build up invisibly; competitive moves go unnoticed until a deal is already lost.</td>
+      <td class="action-stmt">"I want <em>a continuous, real-time view of every account's health</em> so that I can act on risks and opportunities before competitors do."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Account managers</span><span class="utag">Sales managers</span></div></td>
+      <td class="value-text"><strong>Early warning system</strong> for at-risk relationships with built-in competitive and stakeholder intelligence.</td>
+      <td><ol class="disc-list">
+        <li>How do account managers currently track competitive threats within their accounts?</li>
+        <li>Do you have a defined process for identifying at-risk accounts before they churn?</li>
+        <li>How many active stakeholder relationships does a rep maintain per strategic account?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Account churn / attrition rate</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Stakeholder coverage per account</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">At-risk accounts identified early</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time to detect competitive movement</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 08 Pipeline & forecast -->
+    <tr data-cat="Account &amp; deal management">
+      <td><span class="cat-badge cat-deal">Account &amp; deal management</span></td>
+      <td><div class="agent-name"><span class="agent-num">08</span>Opportunity, pipeline &amp; forecast agent</div></td>
+      <td>Monitors deal health against your sales methodology, flags stuck opportunities, detects stage signals from activity and transcripts, and produces a risk-adjusted forecast narrative ahead of reviews.</td>
+      <td class="friction-text">Pipeline reviews are retrospective and reactive; forecast surprises hit at quarter end with little time to recover.</td>
+      <td class="action-stmt">"I want <em>my pipeline continuously reviewed in the background</em> so that I always know which deals need attention before they slip the quarter."</td>
+      <td><div class="user-tags"><span class="utag">Sales reps</span><span class="utag">Sales managers</span><span class="utag">VP Sales</span><span class="utag">Rev Ops</span></div></td>
+      <td class="value-text"><strong>No forecast surprises</strong> — methodology-driven stage management and a pre-built narrative for every review.</td>
+      <td><ol class="disc-list">
+        <li>How do managers currently run pipeline reviews — what data do they rely on?</li>
+        <li>How often do deals slip from one quarter to the next in your pipeline?</li>
+        <li>Do you apply a formal sales methodology (e.g. MEDDIC), and how consistently is it used?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Forecast accuracy</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Deal slippage rate</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Pipeline coverage ratio</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time spent on forecast preparation</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 09 Quoting -->
+    <tr data-cat="Account &amp; deal management">
+      <td><span class="cat-badge cat-deal">Account &amp; deal management</span></td>
+      <td><div class="agent-name"><span class="agent-num">09</span>Intelligent quoting agent</div></td>
+      <td>The rep describes the customer's needs conversationally and the agent generates a correctly bundled, compliant quote — applying the right price book for that customer and outputting in the correct document template.</td>
+      <td class="friction-text">Building quotes manually is slow and error-prone; pricing rules and bundling logic are too complex to rely on memory.</td>
+      <td class="action-stmt">"I want to <em>generate an accurate, customer-specific quote on-site</em> so that I can shorten the commercial cycle without introducing pricing errors."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Commercial teams</span><span class="utag">Deal desk</span></div></td>
+      <td class="value-text"><strong>Faster quote-to-close</strong> with consistent pricing accuracy and reduced rework from manual errors.</td>
+      <td><ol class="disc-list">
+        <li>How long does it currently take from a customer request to a delivered quote?</li>
+        <li>How often are quotes revised due to pricing errors or incorrect product bundling?</li>
+        <li>Is quoting done inside Salesforce today, or in a separate tool?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Average quote turnaround time</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Quote revision / error rate</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Quote-to-close conversion rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time from discovery to proposal</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 10 Coach -->
+    <tr data-cat="Performance &amp; coaching">
+      <td><span class="cat-badge cat-perf">Performance &amp; coaching</span></td>
+      <td><div class="agent-name"><span class="agent-num">10</span>Sales coach agent</div></td>
+      <td>Reviews call and meeting transcripts after every interaction, scores them against your sales methodology, and delivers specific coaching notes to both rep and manager.</td>
+      <td class="friction-text">Managers can only coach the reps they observe directly; the majority of interactions go unreviewed and unimproved.</td>
+      <td class="action-stmt">"I want <em>every customer interaction reviewed and scored</em> so that every rep improves consistently — not just the ones I had time to shadow."</td>
+      <td><div class="user-tags"><span class="utag">Sales managers</span><span class="utag">Sales reps</span><span class="utag">Enablement</span></div></td>
+      <td class="value-text"><strong>Scaled, consistent coaching</strong> across the entire field team — not just those whose calls managers happen to review.</td>
+      <td><ol class="disc-list">
+        <li>How frequently do managers review rep call recordings or transcripts today?</li>
+        <li>Do you have a defined sales methodology that reps are formally coached against?</li>
+        <li>What percentage of reps receive structured coaching feedback each month?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Methodology adherence score</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Rep skill development rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time for new reps to reach quota</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Win rate post-coaching</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 11 Win/Loss -->
+    <tr data-cat="Performance &amp; coaching">
+      <td><span class="cat-badge cat-perf">Performance &amp; coaching</span></td>
+      <td><div class="agent-name"><span class="agent-num">11</span>Win/loss intelligence agent</div></td>
+      <td>After every deal closes, combines deal data with a conversational debrief — asking the rep targeted questions to surface context the data alone cannot capture — and synthesises both into a structured post-mortem.</td>
+      <td class="friction-text">Win/loss learnings are rarely captured; the same mistakes and missed signals repeat across the team.</td>
+      <td class="action-stmt">"I want <em>a structured debrief after every deal closes</em> so that we extract learnings from every outcome rather than just moving on."</td>
+      <td><div class="user-tags"><span class="utag">Sales reps</span><span class="utag">Managers</span><span class="utag">Rev Ops</span><span class="utag">Product</span></div></td>
+      <td class="value-text"><strong>Institutional learning</strong> from every deal — patterns improve methodology, messaging, and competitive positioning over time.</td>
+      <td><ol class="disc-list">
+        <li>Do you currently conduct structured win/loss reviews after deals close?</li>
+        <li>How are learnings from lost deals shared across the sales team today?</li>
+        <li>Are there recurring loss reasons that haven't been fully addressed?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Win rate (trend over time)</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Competitive win rate</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Repeat loss patterns (same root cause)</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Post-mortem completion rate</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 12 QBR -->
+    <tr data-cat="Customer success">
+      <td><span class="cat-badge cat-success">Customer success</span></td>
+      <td><div class="agent-name"><span class="agent-num">12</span>QBR preparation agent</div></td>
+      <td>Ingests all account data — adoption, support history, commercial performance, open pipeline, relationship health — and drafts the QBR structure with supporting data pre-populated for the rep to review and refine.</td>
+      <td class="friction-text">QBR prep takes days of manual effort pulling data from multiple sources; quality and consistency vary widely by rep.</td>
+      <td class="action-stmt">"I want <em>a fully drafted QBR ready for my review</em> so that I walk into every customer review focused on the conversation, not the slides."</td>
+      <td><div class="user-tags"><span class="utag">Account managers</span><span class="utag">Customer success</span><span class="utag">Field reps</span></div></td>
+      <td class="value-text"><strong>Hours saved per QBR</strong> with consistent output quality — enabling more strategic, relationship-led customer conversations.</td>
+      <td><ol class="disc-list">
+        <li>How long does a typical QBR take to prepare end to end today?</li>
+        <li>Is there a consistent QBR template used across the team, or does each rep build their own?</li>
+        <li>How often are QBRs rescheduled because preparation wasn't ready in time?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">QBR preparation time</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">QBR completion &amp; attendance rate</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Expansion revenue from strategic accounts</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Customer satisfaction scores post-QBR</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 13 Analytics -->
+    <tr data-cat="Analytics">
+      <td><span class="cat-badge cat-analytics">Analytics</span></td>
+      <td><div class="agent-name"><span class="agent-num">13</span>AI assistive analytics agent</div></td>
+      <td>Answers natural language queries over sales data — top opportunities, active contacts, relevant campaigns, performance anomalies — and generates the relevant analytics on the fly without requiring dashboard navigation.</td>
+      <td class="friction-text">Reps and managers can't access data insights without navigating reports or requesting help from an ops team.</td>
+      <td class="action-stmt">"I want to <em>ask any question about my business in plain language</em> so that I always have the insight I need exactly when I need it."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Sales managers</span><span class="utag">VP Sales</span><span class="utag">Rev Ops</span></div></td>
+      <td class="value-text"><strong>Democratised data access</strong> — any rep or manager gets instant, accurate answers without analyst support.</td>
+      <td><ol class="disc-list">
+        <li>How do reps and managers currently access pipeline performance data?</li>
+        <li>How often does your team request custom reports from an ops or BI team?</li>
+        <li>Are there insights the team wants but can't currently get without analyst support?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Time to insight (question to answer)</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Self-service data access by reps</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Analytics requests to ops team</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Data-driven decisions per week</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 14 Onboarding -->
+    <tr data-cat="Enablement">
+      <td><span class="cat-badge cat-enable">Enablement</span></td>
+      <td><div class="agent-name"><span class="agent-num">14</span>Onboarding &amp; ramp agent</div></td>
+      <td>Personalised ramp assistant that answers questions about accounts, products, and processes while recommending the most relevant learning modules and courses based on where the rep is in their ramp — adapting the path as knowledge gaps are identified.</td>
+      <td class="friction-text">New reps take too long to reach full productivity; onboarding is generic and doesn't adapt to individual gaps or ramp stage.</td>
+      <td class="action-stmt">"I want <em>a personalised learning guide that knows where I am in my ramp</em> so that I reach full productivity faster and with more confidence."</td>
+      <td><div class="user-tags"><span class="utag">New reps</span><span class="utag">Sales managers</span><span class="utag">Enablement</span></div></td>
+      <td class="value-text"><strong>Faster ramp to full productivity</strong> through personalised, stage-aware learning — reducing manager burden and onboarding inconsistency.</td>
+      <td><ol class="disc-list">
+        <li>What is your current average time for a new rep to reach their first closed deal?</li>
+        <li>Is there a formal, structured onboarding programme in place today?</li>
+        <li>Do you use a learning management system (LMS), and is it connected to Salesforce?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Average ramp time to first deal</span></div>
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Manager time spent on rep onboarding</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">New rep retention (first 12 months)</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Knowledge assessment scores during ramp</span></div>
+      </div></td>
+    </tr>
+
+    <!-- 15 RFP -->
+    <tr data-cat="Commercial response">
+      <td><span class="cat-badge cat-commercial">Commercial response</span></td>
+      <td><div class="agent-name"><span class="agent-num">15</span>RFP &amp; proposal drafting agent</div></td>
+      <td>Parses incoming RFP requirements, maps them against product capabilities and past win content from the library, and generates a first-draft response for the rep to review and approve — compressing proposal cycles from days to hours.</td>
+      <td class="friction-text">RFP responses take days to assemble manually; quality depends entirely on which rep handles it and how much time they have.</td>
+      <td class="action-stmt">"I want <em>a first-draft proposal generated from requirements in minutes</em> so that I can respond to more opportunities without compromising on quality."</td>
+      <td><div class="user-tags"><span class="utag">Field reps</span><span class="utag">Bid teams</span><span class="utag">Pre-sales</span></div></td>
+      <td class="value-text"><strong>Compressed response cycles</strong> with consistent, on-message quality — enabling teams to pursue more bids without more headcount.</td>
+      <td><ol class="disc-list">
+        <li>How many RFPs or proposals does your team respond to per month?</li>
+        <li>How long does it currently take to produce a complete proposal from start to finish?</li>
+        <li>Do you have a centralised proposal content library that reps draw from today?</li>
+      </ol></td>
+      <td><div class="kpi-list">
+        <div class="kpi-item kpi-down"><span class="kpi-arrow">↓</span><span class="kpi-label">Average proposal production time</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Proposals submitted per month</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Proposal-to-meeting conversion rate</span></div>
+        <div class="kpi-item kpi-up"><span class="kpi-arrow">↑</span><span class="kpi-label">Response consistency and quality</span></div>
+      </div></td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<div class="page-footer">
+  Agentforce for B2B field sales &nbsp;·&nbsp; 15 agents across 9 categories &nbsp;·&nbsp; Salesforce brand guidelines applied
+</div>
+
+<script>
+const filterBtns = document.querySelectorAll('.filter-btn');
+const rows = document.querySelectorAll('#table-body tr');
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat;
+    rows.forEach(row => {
+      if (cat === 'all' || row.dataset.cat === cat) {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>
